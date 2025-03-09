@@ -1,6 +1,6 @@
 {
     "name": "screepsmod-portals",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Adds magic portals to a private Screeps server",
     "main": "dist/index.js",
     "scripts": {
