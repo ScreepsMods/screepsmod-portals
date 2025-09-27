@@ -70,6 +70,25 @@ function isCore(room) {
     const name = ___default["default"].isString(room) ? room : room.name;
     return !!name.match(/[EW]\d*5[NS]\d*5/);
 }
+/**
+ * Check whether {@link r} represents a range.
+ *
+ * @param r The range to check
+ * @param minValue The expected lower bound of the range
+ * @param maxValue The expected upper bound of the range
+ */
+function isRange(r, minValue, maxValue) {
+    return (Array.isArray(r) &&
+        r.length === 2 &&
+        r.every((n) => typeof n === 'number' && (minValue === undefined || n >= 0) && (maxValue === undefined || n <= maxValue)) &&
+        r[0] < r[1]);
+}
+/**
+ * Check whether a number lies within [min, max]
+ */
+function isNumberBetween(n, min, max) {
+    return n >= min && n <= max;
+}
 
 const utils$2 = serverRequire('@screeps/backend/lib/utils.js');
 // const engineUtils = serverRequire('@screeps/engine/src/utils.js');
@@ -285,17 +304,6 @@ function common$1 (config) {
         }
         return true;
     }
-    function isRange(r, minValue, maxValue) {
-        return (Array.isArray(r) &&
-            r.length === 2 &&
-            r.every((n) => typeof n === 'number' &&
-                (minValue === undefined || n >= 0) &&
-                (maxValue === undefined || n <= maxValue)) &&
-            r[0] < r[1]);
-    }
-    function inRange(n, min, max) {
-        return n >= min && n <= max;
-    }
     function loadSettings(data) {
         var _a, _b, _c, _d;
         const settings = {};
@@ -327,25 +335,25 @@ function common$1 (config) {
             log('error', `invalid value for 'chance', using default`);
         }
         else if (data.chance) {
-            if (!inRange(data.chance.decay, 0, 1)) {
+            if (!isNumberBetween(data.chance.decay, 0, 1)) {
                 log('error', `invalid value for 'chance.decay', using default`);
             }
             else {
                 ((_a = settings.chance) !== null && _a !== void 0 ? _a : (settings.chance = {})).decay = data.chance.decay;
             }
-            if (!inRange(data.chance.unstable, 0, 1)) {
+            if (!isNumberBetween(data.chance.unstable, 0, 1)) {
                 log('error', `invalid value for 'chance.stray', using default`);
             }
             else {
                 ((_b = settings.chance) !== null && _b !== void 0 ? _b : (settings.chance = {})).unstable = data.chance.unstable;
             }
-            if (!inRange(data.chance.oneWay, 0, 1)) {
+            if (!isNumberBetween(data.chance.oneWay, 0, 1)) {
                 log('error', `invalid value for 'chance.oneWay', using default`);
             }
             else {
                 ((_c = settings.chance) !== null && _c !== void 0 ? _c : (settings.chance = {})).oneWay = data.chance.oneWay;
             }
-            if (!inRange(data.chance.stray, 0, 1)) {
+            if (!isNumberBetween(data.chance.stray, 0, 1)) {
                 log('error', `invalid value for 'chance.stray', using default`);
             }
             else {

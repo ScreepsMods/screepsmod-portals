@@ -1,3 +1,5 @@
+export type Range = [min: number, max: number];
+
 export type CreatePortalOpts = {
 	oneWay?: boolean;
 	core?: boolean;
@@ -18,7 +20,7 @@ export interface PortalModSettings {
 	 * First number is the minimum distance; can be `0` to make portals as close as possible.
 	 * Second number is the maximum distance; can be `Infinity` to make portals as far as possible.
 	 */
-	distance: [number, number];
+	distance: Range;
 	/**
 	 * Randomness thresholds for various settings.
 	 * All those numbers are floats in [0, 1].
@@ -57,7 +59,7 @@ export interface PortalModSettings {
 	 * until a specific date and switch to decay for PORTAL_DECAY ticks after that,
 	 * or are just decaying for a number of ticks before disappearing.
 	 */
-	decayTimeRange: number | [number, number] | undefined;
+	decayTimeRange: number | Range | undefined;
 	/**
 	 * The unstable interval assigned to automatically generated portals.
 	 *
@@ -69,7 +71,7 @@ export interface PortalModSettings {
 	 * until a specific date and switch to decay for PORTAL_DECAY ticks after that,
 	 * or are just decaying for a number of ticks before disappearing.
 	 */
-	unstableDateRange: number | [number, number];
+	unstableDateRange: number | Range;
 }
 
 declare global {

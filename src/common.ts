@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import path from 'path';
-import { isRoomName, isRoomPosition, printPos, serverRequire, log } from './utils';
+import { isRoomName, isRoomPosition, printPos, serverRequire, log, isRange, isNumberBetween } from './utils';
 import type commonMod from '@screeps/common';
 import type utilsMod from '@screeps/backend/lib/utils.js';
 import { CreatePortalOpts, PortalOpts, PortalModSettings } from './types';
@@ -73,24 +73,6 @@ export default function (config: ServerConfig) {
 		return true;
 	}
 
-	function isRange(r: unknown, minValue?: number, maxValue?: number) {
-		return (
-			Array.isArray(r) &&
-			r.length === 2 &&
-			r.every(
-				(n) =>
-					typeof n === 'number' &&
-					(minValue === undefined || n >= 0) &&
-					(maxValue === undefined || n <= maxValue)
-			) &&
-			r[0] < r[1]
-		);
-	}
-
-	function inRange(n: number, min: number, max: number) {
-		return n >= min && n <= max;
-	}
-
 	function loadSettings(data: Partial<PortalModSettings>) {
 		const settings: Partial<PortalModSettings> = {};
 		if ('maxPairs' in data && (typeof data.maxPairs !== 'number' || data.maxPairs < 0)) {
@@ -116,22 +98,22 @@ export default function (config: ServerConfig) {
 		if (data.chance && !_.isPlainObject(data.chance)) {
 			log('error', `invalid value for 'chance', using default`);
 		} else if (data.chance) {
-			if (!inRange(data.chance.decay, 0, 1)) {
+			if (!isNumberBetween(data.chance.decay, 0, 1)) {
 				log('error', `invalid value for 'chance.decay', using default`);
 			} else {
 				(settings.chance ??= {} as PortalModSettings['chance']).decay = data.chance.decay;
 			}
-			if (!inRange(data.chance.unstable, 0, 1)) {
+			if (!isNumberBetween(data.chance.unstable, 0, 1)) {
 				log('error', `invalid value for 'chance.stray', using default`);
 			} else {
 				(settings.chance ??= {} as PortalModSettings['chance']).unstable = data.chance.unstable;
 			}
-			if (!inRange(data.chance.oneWay, 0, 1)) {
+			if (!isNumberBetween(data.chance.oneWay, 0, 1)) {
 				log('error', `invalid value for 'chance.oneWay', using default`);
 			} else {
 				(settings.chance ??= {} as PortalModSettings['chance']).oneWay = data.chance.oneWay;
 			}
-			if (!inRange(data.chance.stray, 0, 1)) {
+			if (!isNumberBetween(data.chance.stray, 0, 1)) {
 				log('error', `invalid value for 'chance.stray', using default`);
 			} else {
 				(settings.chance ??= {} as PortalModSettings['chance']).stray = data.chance.stray;

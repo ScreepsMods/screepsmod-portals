@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import path from 'path';
+import { Range } from './types';
 
 const serverModulesDir = path.resolve(process.cwd(), 'node_modules');
 
@@ -90,4 +91,30 @@ export function checkTerrain(terrain: number[], x: number, y: number, mask: numb
 	if (y < 0 || y > 49) throw new Error(`y coordinate out of terrain bounds: ${y}`);
 	const code = terrain[y * 50 + x];
 	return (code & mask) > 0;
+}
+
+/**
+ * Check whether {@link r} represents a range.
+ *
+ * @param r The range to check
+ * @param minValue The expected lower bound of the range
+ * @param maxValue The expected upper bound of the range
+ */
+export function isRange(r: unknown, minValue?: number, maxValue?: number): r is Range {
+	return (
+		Array.isArray(r) &&
+		r.length === 2 &&
+		r.every(
+			(n) =>
+				typeof n === 'number' && (minValue === undefined || n >= 0) && (maxValue === undefined || n <= maxValue)
+		) &&
+		r[0] < r[1]
+	);
+}
+
+/**
+ * Check whether a number lies within [min, max]
+ */
+export function isNumberBetween(n: number, min: number, max: number) {
+	return n >= min && n <= max;
 }
