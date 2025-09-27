@@ -98,7 +98,7 @@ export function isRange(r: unknown, minValue?: number, maxValue?: number): r is 
 			(n) =>
 				typeof n === 'number' && (minValue === undefined || n >= 0) && (maxValue === undefined || n <= maxValue)
 		) &&
-		r[0] < r[1]
+		(r[0] as number) < (r[1] as number)
 	);
 }
 

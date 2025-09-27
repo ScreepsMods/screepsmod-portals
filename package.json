@@ -21,6 +21,7 @@
         "@rollup/plugin-node-resolve": "^15.2.3",
         "@rollup/plugin-terser": "^0.4.4",
         "@rollup/plugin-typescript": "^11.1.6",
+        "@total-typescript/ts-reset": "^0.6.1",
         "@types/lodash": "^3.10.9",
         "@types/node": "^10.17.60",
         "@types/q": "^1.5.8",
