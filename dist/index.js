@@ -52,6 +52,7 @@ var RoomType;
     RoomType["NORMAL"] = "normal";
     RoomType["CORE"] = "core";
     RoomType["CROSSROADS"] = "crossroads";
+    RoomType["HIGHWAY"] = "highway";
 })(RoomType || (RoomType = {}));
 function roomType(room) {
     const name = ___default["default"].isString(room) ? room : room.name;
@@ -59,7 +60,8 @@ function roomType(room) {
         return RoomType.CORE;
     else if (isCrossroads(name))
         return RoomType.CROSSROADS;
-    // TODO: incomplete
+    else if (isHighway(name))
+        return RoomType.HIGHWAY;
     return RoomType.NORMAL;
 }
 function isCrossroads(room) {
@@ -69,6 +71,10 @@ function isCrossroads(room) {
 function isCore(room) {
     const name = ___default["default"].isString(room) ? room : room.name;
     return !!name.match(/[EW]\d*5[NS]\d*5/);
+}
+function isHighway(room) {
+    const name = ___default["default"].isString(room) ? room : room.name;
+    return !!name.match(/[EW]\d*0[NS]\d*|[EW]\d*[NS]\d*0/);
 }
 /**
  * Check whether {@link r} represents a range.

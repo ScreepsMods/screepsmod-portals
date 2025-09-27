@@ -57,13 +57,14 @@ export enum RoomType {
 	NORMAL = 'normal',
 	CORE = 'core',
 	CROSSROADS = 'crossroads',
+	HIGHWAY = 'highway',
 }
 
 export function roomType(room: Room | RoomName) {
 	const name = _.isString(room) ? room : room.name;
 	if (isCore(name)) return RoomType.CORE;
 	else if (isCrossroads(name)) return RoomType.CROSSROADS;
-	// TODO: incomplete
+	else if (isHighway(name)) return RoomType.HIGHWAY;
 	return RoomType.NORMAL;
 }
 
@@ -75,6 +76,11 @@ export function isCrossroads(room: Room | RoomName) {
 export function isCore(room: Room | RoomName) {
 	const name = _.isString(room) ? room : room.name;
 	return !!name.match(/[EW]\d*5[NS]\d*5/);
+}
+
+export function isHighway(room: Room | RoomName) {
+	const name = _.isString(room) ? room : room.name;
+	return !!name.match(/[EW]\d*0[NS]\d*|[EW]\d*[NS]\d*0/);
 }
 
 /**
