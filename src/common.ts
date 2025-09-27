@@ -1,8 +1,18 @@
 import _ from 'lodash';
-import { isRoomName, isRoomPosition, printPos, serverRequire, log, isRange, isNumberBetween } from './utils';
+import {
+	isRoomName,
+	isRoomPosition,
+	printPos,
+	serverRequire,
+	log,
+	isRange,
+	isNumberBetween,
+	isSamePos,
+	isInRangeTo,
+} from './utils';
 import type commonMod from '@screeps/common';
 import type utilsMod from '@screeps/backend/lib/utils.js';
-import { CreatePortalOpts, PortalOpts, PortalModSettings } from './types';
+import { CreatePortalOpts, PortalOpts, PortalModSettings, RemovePortalOpts } from './types';
 
 const common = serverRequire('@screeps/common') as typeof commonMod;
 const utils = serverRequire('@screeps/backend/lib/utils.js') as typeof utilsMod;
@@ -264,11 +274,82 @@ export default function (config: ServerConfig) {
 		db['rooms.objects'].insert(portal);
 	}
 
+	/**
+	 * Check for and return all portal-forming objects at the given position
+	 */
+	async function getPortalObjectsAtPos(pos: RoomPosition) {
+		const objects = (await db['rooms.objects'].find({
+			room: pos.room,
+		})) as RoomObject[];
+
+		const portal = objects.find((obj) => obj.type === 'portal' && isSamePos(obj, pos)) as PortalObject;
+		if (!portal) {
+			return [];
+		}
+
+		// We have a portal now *but*… it could be a core portal, so look for a neighboring wall
+		const possibleWalls = objects.filter(
+			(obj) => obj.type === 'constructedWall' && isInRangeTo(obj, pos, 1) && !('hits' in obj)
+		) as WallObject[];
+		// No wall -> single portal
+		if (!possibleWalls.length) {
+			return [portal];
+		}
+
+		// Otherwise, check each wall for a 8 ring of portals surrounding it
+		const portalObjects: (PortalObject | WallObject)[] = [];
+		for (const wall of possibleWalls) {
+			const portalRing = objects.filter(
+				(obj) => obj.type === 'portal' && isInRangeTo(obj, wall, 1)
+			) as PortalObject[];
+			if (portalRing.length !== 8) continue;
+			portalObjects.push(wall, ...portalRing);
+			break;
+		}
+
+		return portalObjects;
+	}
+
+	async function removePortal(pos: RoomPosition, _opts: RemovePortalOpts = {}) {
+		const defaults: RemovePortalOpts = { otherSide: true, dryRun: false };
+		const opts = _.defaults<RemovePortalOpts>({}, _opts, defaults);
+		if (!isRoomPosition(pos)) {
+			throw new Error(
+				`Position "${JSON.stringify(pos)}" isn't a valid room position; expected \`{ x, y, room }\``
+			);
+		}
+		const portalObjects = await getPortalObjectsAtPos(pos);
+		if (!portalObjects.length) {
+			throw new Error(`No portal at position "${JSON.stringify(pos)}"`);
+		}
+
+		if (opts.otherSide) {
+			const portalPos = (portalObjects.length === 1 ? portalObjects[0] : portalObjects[1]) as PortalObject;
+			if (isRoomPosition(portalPos.destination)) {
+				const reverseObjects = await getPortalObjectsAtPos(portalPos.destination);
+				log('debug', `found ${reverseObjects.length} on the other side:`, reverseObjects[0]);
+				portalObjects.push(...reverseObjects);
+			} else {
+				log('error', `object at the other side has no destination?`);
+			}
+		}
+
+		// Now remove all of those
+		const objectIDs = portalObjects.map((o) => o._id).filter(Boolean);
+		if (opts.dryRun) {
+			log('info', `would delete ${portalObjects.length} objects:`, portalObjects);
+			return;
+		}
+		log('debug', `deleting ${portalObjects.length} objects:`, portalObjects);
+		await db['rooms.objects'].removeWhere({ _id: { $in: objectIDs } });
+	}
+
 	config.portal = {
 		settings: Object.assign({}, DEFAULTS) as PortalModSettings,
 		loadSettings,
 		createPortalPair,
 		makePortal,
+		removePortal,
 	};
 }
 
@@ -283,6 +364,7 @@ declare global {
 				opts?: Partial<CreatePortalOpts>
 			): Promise<void>;
 			makePortal(pos: RoomPosition, destPos: RoomPosition, opts?: PortalOpts): Promise<void>;
+			removePortal(pos: RoomPosition, opts?: RemovePortalOpts): Promise<void>;
 		};
 	}
 }

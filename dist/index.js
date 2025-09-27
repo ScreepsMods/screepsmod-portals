@@ -111,6 +111,16 @@ function cli (config, sandbox) {
             return 'OK';
         },
     ]);
+    sandbox.map.removePortal = utils$2.withHelp([
+        'removePortal(pos: {x, y, room}) - Remove the given portal.\n' +
+            '    `opts` is an object with the following optional properties:\n' +
+            '    * `dryRun` - do not actually delete anything\n' +
+            "    * `otherSide` - delete the portal's destination as well",
+        async function (pos, opts) {
+            await config.portal.removePortal(pos, opts);
+            return 'OK';
+        },
+    ]);
     // Regenerate the help message to show our new commands
     sandbox.map._help = utils$2.generateCliHelp('map.', sandbox.map);
 }
@@ -506,11 +516,70 @@ function common$1 (config) {
         log('debug', `portal: ${JSON.stringify(portal)}`);
         db['rooms.objects'].insert(portal);
     }
+    /**
+     * Check for and return all portal-forming objects at the given position
+     */
+    async function getPortalObjectsAtPos(pos) {
+        const objects = (await db['rooms.objects'].find({
+            room: pos.room,
+        }));
+        const portal = objects.find((obj) => obj.type === 'portal' && isSamePos(obj, pos));
+        if (!portal) {
+            return [];
+        }
+        // We have a portal now *but*… it could be a core portal, so look for a neighboring wall
+        const possibleWalls = objects.filter((obj) => obj.type === 'constructedWall' && isInRangeTo(obj, pos, 1) && !('hits' in obj));
+        // No wall -> single portal
+        if (!possibleWalls.length) {
+            return [portal];
+        }
+        // Otherwise, check each wall for a 8 ring of portals surrounding it
+        const portalObjects = [];
+        for (const wall of possibleWalls) {
+            const portalRing = objects.filter((obj) => obj.type === 'portal' && isInRangeTo(obj, wall, 1));
+            if (portalRing.length !== 8)
+                continue;
+            portalObjects.push(wall, ...portalRing);
+            break;
+        }
+        return portalObjects;
+    }
+    async function removePortal(pos, _opts = {}) {
+        const defaults = { otherSide: true, dryRun: false };
+        const opts = ___default["default"].defaults({}, _opts, defaults);
+        if (!isRoomPosition(pos)) {
+            throw new Error(`Position "${JSON.stringify(pos)}" isn't a valid room position; expected \`{ x, y, room }\``);
+        }
+        const portalObjects = await getPortalObjectsAtPos(pos);
+        if (!portalObjects.length) {
+            throw new Error(`No portal at position "${JSON.stringify(pos)}"`);
+        }
+        if (opts.otherSide) {
+            const portalPos = (portalObjects.length === 1 ? portalObjects[0] : portalObjects[1]);
+            if (isRoomPosition(portalPos.destination)) {
+                const reverseObjects = await getPortalObjectsAtPos(portalPos.destination);
+                log('debug', `found ${reverseObjects.length} on the other side:`, reverseObjects[0]);
+                portalObjects.push(...reverseObjects);
+            }
+            else {
+                log('error', `object at the other side has no destination?`);
+            }
+        }
+        // Now remove all of those
+        const objectIDs = portalObjects.map((o) => o._id).filter(Boolean);
+        if (opts.dryRun) {
+            log('info', `would delete ${portalObjects.length} objects:`, portalObjects);
+            return;
+        }
+        log('debug', `deleting ${portalObjects.length} objects:`, portalObjects);
+        await db['rooms.objects'].removeWhere({ _id: { $in: objectIDs } });
+    }
     config.portal = {
         settings: Object.assign({}, DEFAULTS),
         loadSettings,
         createPortalPair,
         makePortal,
+        removePortal,
     };
 }
 

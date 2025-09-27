@@ -23,6 +23,12 @@ export type CreatePortalOpts = {
 	  }
 );
 
+export type RemovePortalOpts = {
+	dryRun?: boolean;
+	/** Whether to remove the reverse portal */
+	otherSide?: boolean;
+};
+
 /**
  * Options for creating a single portal
  */

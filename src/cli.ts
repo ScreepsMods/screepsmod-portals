@@ -2,7 +2,7 @@ import _ from 'lodash';
 import { serverRequire } from './utils';
 
 import type utilsMod from '@screeps/backend/lib/utils.js';
-import { CreatePortalOpts } from './types';
+import { CreatePortalOpts, RemovePortalOpts } from './types';
 
 const utils = serverRequire('@screeps/backend/lib/utils.js') as typeof utilsMod;
 // const engineUtils = serverRequire('@screeps/engine/src/utils.js');
@@ -21,6 +21,16 @@ export default function (config: ServerConfig, sandbox: CliSandbox) {
 		},
 	]);
 
+	sandbox.map.removePortal = utils.withHelp([
+		'removePortal(pos: {x, y, room}) - Remove the given portal.\n' +
+			'    `opts` is an object with the following optional properties:\n' +
+			'    * `dryRun` - do not actually delete anything\n' +
+			"    * `otherSide` - delete the portal's destination as well",
+		async function (pos: RoomPosition, opts?: RemovePortalOpts) {
+			await config.portal.removePortal(pos, opts);
+			return 'OK';
+		},
+	]);
 	// Regenerate the help message to show our new commands
 	sandbox.map._help = utils.generateCliHelp('map.', sandbox.map);
 }
@@ -32,5 +42,6 @@ declare global {
 			dstRoom: string | RoomPosition,
 			opts?: CreatePortalOpts
 		): Promise<string>;
+		removePortal(pos: RoomPosition, opts?: RemovePortalOpts): Promise<string>;
 	}
 }
