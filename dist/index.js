@@ -94,14 +94,15 @@ const utils$2 = serverRequire('@screeps/backend/lib/utils.js');
 // const engineUtils = serverRequire('@screeps/engine/src/utils.js');
 function cli (config, sandbox) {
     sandbox.map.createPortal = utils$2.withHelp([
-        'createPortal(srcRoom, dstRoom, [opts]) - Create a portal between two rooms (or positions).\n' +
-            "    'opts' is an object with the following optional properties:\n" +
-            '    * decayTime - number of ticks before the portal decays and disappears, or true if you want the default decaying duration\n' +
-            '    * unstableDate - a timestamp of when the portal should start decaying\n' +
-            '    * oneWay - create only one portal from source to dest\n' +
-            '    * core - create an 3x3 rings of portals around a constructed wall (the position is in the center)',
+        'createPortal(srcRoom: string | {x, y, room}, dstRoom: string | {x, y, room}, [opts]) - Create a portal between two rooms (or positions).\n' +
+            '    `opts` is an object with the following optional properties:\n' +
+            '    * `decayTime` - number of ticks before the portal decays and disappears, or true if you want the default decaying duration\n' +
+            '    * `unstableDate` - a timestamp of when the portal should start decaying\n' +
+            '    * `oneWay` - create only one portal from source to dest\n' +
+            '    * `core` - create an 3x3 rings of portals around a constructed wall (the position is in the center)',
         async function (src, dst, opts) {
-            config.portal.createPortalPair(src, dst, opts);
+            await config.portal.createPortalPair(src, dst, opts);
+            return 'OK';
         },
     ]);
     // Regenerate the help message to show our new commands

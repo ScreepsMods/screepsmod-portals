@@ -21,7 +21,7 @@ const DEFAULTS: PortalModSettings = {
 };
 
 function checkPosition(pos: unknown): [roomName: RoomName, pos: RoomPosition | undefined] {
-	let roomName: string;
+	let roomName: RoomName;
 	let roomPos: RoomPosition | undefined;
 	if (!isRoomPosition(pos)) {
 		if (!isRoomName(pos)) {
@@ -281,8 +281,8 @@ declare global {
 				src: string | RoomPosition,
 				dst: string | RoomPosition,
 				opts?: Partial<CreatePortalOpts>
-			): void;
-			makePortal(pos: RoomPosition, destPos: RoomPosition, opts?: PortalOpts): void;
+			): Promise<void>;
+			makePortal(pos: RoomPosition, destPos: RoomPosition, opts?: PortalOpts): Promise<void>;
 		};
 	}
 }
