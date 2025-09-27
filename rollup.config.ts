@@ -9,6 +9,7 @@ export default {
 		format: 'cjs',
 		exports: 'auto',
 	},
+	external: ['lodash'],
 	plugins: [
 		resolve(),
 		commonjs(),
@@ -17,4 +18,4 @@ export default {
 			target: 'es2018',
 		}),
 	],
-}
+};
