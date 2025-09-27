@@ -66,16 +66,12 @@ export interface PortalModSettings {
 		 * Random chance that a portal won't obey the normal rules.
 		 *
 		 * A stray portal might spawn outside of the core/crossroads rooms.
-		 *
-		 * @todo Unimplemented
 		 */
 		stray: number;
 		/**
 		 * Random chance that a portal is a one-way.
 		 *
 		 * A one way portal won't have a reverse portal linking back to where it came from.
-		 *
-		 * @todo Unimplemented
 		 */
 		oneWay: number;
 	};
