@@ -28,6 +28,7 @@
         "eslint-config-prettier": "^9.1.0",
         "prettier": "^3.3.3",
         "rollup": "^2.79.1",
+        "typed-screeps-server": "^0.0.1",
         "typescript": "^5.6.2"
     },
     "dependencies": {
