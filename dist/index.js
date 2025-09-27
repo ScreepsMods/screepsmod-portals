@@ -296,190 +296,193 @@ function common$1 (config) {
     function inRange(n, min, max) {
         return n >= min && n <= max;
     }
-    config.portal = {
-        settings: Object.assign({}, DEFAULTS),
-        loadSettings: function (data) {
-            var _a, _b, _c, _d;
-            const settings = {};
-            if ('maxPairs' in data && (typeof data.maxPairs !== 'number' || data.maxPairs < 0)) {
-                log('error', `invalid value for 'maxPairs', using default`);
+    function loadSettings(data) {
+        var _a, _b, _c, _d;
+        const settings = {};
+        if ('maxPairs' in data && (typeof data.maxPairs !== 'number' || data.maxPairs < 0)) {
+            log('error', `invalid value for 'maxPairs', using default`);
+        }
+        else {
+            settings.maxPairs = data.maxPairs;
+        }
+        if (data.distance && !isRange(data.distance, 0)) {
+            log('error', `invalid value for 'distance', using default`);
+        }
+        else {
+            settings.distance = data.distance;
+        }
+        if (data.decayTimeRange && !___default["default"].isFinite(data.decayTimeRange) && !isRange(data.decayTimeRange, 0)) {
+            log('error', `invalid value for 'decayTimeRange', using default`);
+        }
+        else {
+            settings.decayTimeRange = data.decayTimeRange;
+        }
+        if (data.unstableDateRange && !___default["default"].isFinite(data.unstableDateRange) && !isRange(data.unstableDateRange, 0)) {
+            log('error', `invalid value for 'unstableDateRange', using default`);
+        }
+        else {
+            settings.unstableDateRange = data.unstableDateRange;
+        }
+        if (data.chance && !___default["default"].isPlainObject(data.chance)) {
+            log('error', `invalid value for 'chance', using default`);
+        }
+        else if (data.chance) {
+            if (!inRange(data.chance.decay, 0, 1)) {
+                log('error', `invalid value for 'chance.decay', using default`);
             }
             else {
-                settings.maxPairs = data.maxPairs;
+                ((_a = settings.chance) !== null && _a !== void 0 ? _a : (settings.chance = {})).decay = data.chance.decay;
             }
-            if (data.distance && !isRange(data.distance, 0)) {
-                log('error', `invalid value for 'distance', using default`);
-            }
-            else {
-                settings.distance = data.distance;
-            }
-            if (data.decayTimeRange && !___default["default"].isFinite(data.decayTimeRange) && !isRange(data.decayTimeRange, 0)) {
-                log('error', `invalid value for 'decayTimeRange', using default`);
+            if (!inRange(data.chance.unstable, 0, 1)) {
+                log('error', `invalid value for 'chance.stray', using default`);
             }
             else {
-                settings.decayTimeRange = data.decayTimeRange;
+                ((_b = settings.chance) !== null && _b !== void 0 ? _b : (settings.chance = {})).unstable = data.chance.unstable;
             }
-            if (data.unstableDateRange && !___default["default"].isFinite(data.unstableDateRange) && !isRange(data.unstableDateRange, 0)) {
-                log('error', `invalid value for 'unstableDateRange', using default`);
+            if (!inRange(data.chance.oneWay, 0, 1)) {
+                log('error', `invalid value for 'chance.oneWay', using default`);
             }
             else {
-                settings.unstableDateRange = data.unstableDateRange;
+                ((_c = settings.chance) !== null && _c !== void 0 ? _c : (settings.chance = {})).oneWay = data.chance.oneWay;
             }
-            if (data.chance && !___default["default"].isPlainObject(data.chance)) {
-                log('error', `invalid value for 'chance', using default`);
+            if (!inRange(data.chance.stray, 0, 1)) {
+                log('error', `invalid value for 'chance.stray', using default`);
             }
-            else if (data.chance) {
-                if (!inRange(data.chance.decay, 0, 1)) {
-                    log('error', `invalid value for 'chance.decay', using default`);
-                }
-                else {
-                    ((_a = settings.chance) !== null && _a !== void 0 ? _a : (settings.chance = {})).decay = data.chance.decay;
-                }
-                if (!inRange(data.chance.unstable, 0, 1)) {
-                    log('error', `invalid value for 'chance.stray', using default`);
-                }
-                else {
-                    ((_b = settings.chance) !== null && _b !== void 0 ? _b : (settings.chance = {})).unstable = data.chance.unstable;
-                }
-                if (!inRange(data.chance.oneWay, 0, 1)) {
-                    log('error', `invalid value for 'chance.oneWay', using default`);
-                }
-                else {
-                    ((_c = settings.chance) !== null && _c !== void 0 ? _c : (settings.chance = {})).oneWay = data.chance.oneWay;
-                }
-                if (!inRange(data.chance.stray, 0, 1)) {
-                    log('error', `invalid value for 'chance.stray', using default`);
-                }
-                else {
-                    ((_d = settings.chance) !== null && _d !== void 0 ? _d : (settings.chance = {})).stray = data.chance.stray;
-                }
+            else {
+                ((_d = settings.chance) !== null && _d !== void 0 ? _d : (settings.chance = {})).stray = data.chance.stray;
             }
-            this.settings = ___default["default"].defaultsDeep({}, settings, DEFAULTS);
-            log('debug', `settings: ${JSON.stringify(this.settings, undefined, ' ')}`);
-        },
-        createPortalPair: async function (src, dst, _opts = {}) {
-            const opts = ___default["default"].defaults({}, _opts, {
-                decayTime: undefined,
-                unstableDate: undefined,
-                oneWay: false,
-                core: false,
-            });
-            let portalOpts = {};
-            if (opts.decayTime && opts.unstableDate) {
-                throw new Error("can't specify both decayTime and unstableDate");
-            }
-            else if (opts.decayTime) {
-                portalOpts.decayTime = opts.decayTime;
-            }
-            else if (opts.unstableDate) {
-                portalOpts.unstableDate = opts.unstableDate;
-            }
-            let [srcRoom, srcPos] = checkPosition(src);
-            let [dstRoom, dstPos] = checkPosition(dst);
-            log('info', `creating portal from ${srcPos ? printPos(srcPos) : srcRoom} to ${dstPos ? printPos(dstPos) : dstRoom}: opts: ${JSON.stringify(portalOpts)}`);
-            const srcTerrain = (await db['rooms.terrain'].findOne({
-                room: src,
-            }));
-            if (!srcTerrain) {
-                throw new Error('Source room does not exist');
-            }
-            const dstTerrain = (await db['rooms.terrain'].findOne({
-                room: dst,
-            }));
-            if (!dstTerrain) {
-                throw new Error('Destination room does not exist');
-            }
-            if (!srcPos) {
-                const coords = await utils.findFreePos(srcRoom, opts.core ? 1 : 0);
-                srcPos = { ...coords, room: srcRoom };
-            }
-            else if (!isValidPortalLocation(srcPos.room, srcPos.x, srcPos.y, opts.core)) {
-                throw new Error(`source position ${srcPos} is invalid for a portal`);
-            }
-            if (!dstPos) {
-                const coords = await utils.findFreePos(dstRoom, opts.core ? 1 : 0);
-                dstPos = { ...coords, room: dstRoom };
-            }
-            else if (!isValidPortalLocation(dstPos.room, dstPos.x, dstPos.y, opts.core)) {
-                throw new Error(`destination position ${dstPos} is invalid for a portal`);
-            }
-            if (opts.core) {
-                for (const x of ___default["default"].range(-1, 2)) {
-                    for (const y of ___default["default"].range(-1, 2)) {
-                        const coreSrc = { x: srcPos.x + x, y: srcPos.y + y, room: srcPos.room };
-                        const coreDst = { x: dstPos.x + x, y: dstPos.y + y, room: dstPos.room };
-                        if (x === 0 && y === 0) {
-                            // Make an eternal center wall; the portal decay handles removing those
-                            let wall = { ...coreSrc, type: 'constructedWall' };
+        }
+        config.portal.settings = ___default["default"].defaultsDeep({}, settings, DEFAULTS);
+        log('debug', `settings: ${JSON.stringify(config.portal.settings, undefined, ' ')}`);
+    }
+    async function createPortalPair(src, dst, _opts = {}) {
+        const opts = ___default["default"].defaults({}, _opts, {
+            decayTime: undefined,
+            unstableDate: undefined,
+            oneWay: false,
+            core: false,
+        });
+        let portalOpts = {};
+        if (opts.decayTime && opts.unstableDate) {
+            throw new Error("can't specify both decayTime and unstableDate");
+        }
+        else if (opts.decayTime) {
+            portalOpts.decayTime = opts.decayTime;
+        }
+        else if (opts.unstableDate) {
+            portalOpts.unstableDate = opts.unstableDate;
+        }
+        let [srcRoom, srcPos] = checkPosition(src);
+        let [dstRoom, dstPos] = checkPosition(dst);
+        log('info', `creating portal from ${srcPos ? printPos(srcPos) : srcRoom} to ${dstPos ? printPos(dstPos) : dstRoom}: opts: ${JSON.stringify(portalOpts)}`);
+        const srcTerrain = (await db['rooms.terrain'].findOne({
+            room: src,
+        }));
+        if (!srcTerrain) {
+            throw new Error('Source room does not exist');
+        }
+        const dstTerrain = (await db['rooms.terrain'].findOne({
+            room: dst,
+        }));
+        if (!dstTerrain) {
+            throw new Error('Destination room does not exist');
+        }
+        if (!srcPos) {
+            const coords = await utils.findFreePos(srcRoom, opts.core ? 1 : 0);
+            srcPos = { ...coords, room: srcRoom };
+        }
+        else if (!isValidPortalLocation(srcPos.room, srcPos.x, srcPos.y, opts.core)) {
+            throw new Error(`source position ${srcPos} is invalid for a portal`);
+        }
+        if (!dstPos) {
+            const coords = await utils.findFreePos(dstRoom, opts.core ? 1 : 0);
+            dstPos = { ...coords, room: dstRoom };
+        }
+        else if (!isValidPortalLocation(dstPos.room, dstPos.x, dstPos.y, opts.core)) {
+            throw new Error(`destination position ${dstPos} is invalid for a portal`);
+        }
+        if (opts.core) {
+            for (const x of ___default["default"].range(-1, 2)) {
+                for (const y of ___default["default"].range(-1, 2)) {
+                    const coreSrc = { x: srcPos.x + x, y: srcPos.y + y, room: srcPos.room };
+                    const coreDst = { x: dstPos.x + x, y: dstPos.y + y, room: dstPos.room };
+                    if (x === 0 && y === 0) {
+                        // Make an eternal center wall; the portal decay handles removing those
+                        let wall = { ...coreSrc, type: 'constructedWall' };
+                        await db['rooms.objects'].insert(wall);
+                        if (!opts.oneWay) {
+                            wall = { ...coreDst, type: 'constructedWall' };
                             await db['rooms.objects'].insert(wall);
-                            if (!opts.oneWay) {
-                                wall = { ...coreDst, type: 'constructedWall' };
-                                await db['rooms.objects'].insert(wall);
-                            }
                         }
-                        else {
-                            this.makePortal(coreSrc, coreDst, portalOpts);
-                            if (!opts.oneWay) {
-                                this.makePortal(coreDst, coreSrc, portalOpts);
-                            }
+                    }
+                    else {
+                        makePortal(coreSrc, coreDst, portalOpts);
+                        if (!opts.oneWay) {
+                            makePortal(coreDst, coreSrc, portalOpts);
                         }
                     }
                 }
             }
+        }
+        else {
+            makePortal(srcPos, dstPos, portalOpts);
+            if (!opts.oneWay) {
+                makePortal(dstPos, srcPos, portalOpts);
+            }
+        }
+    }
+    async function makePortal(pos, destPos, opts) {
+        log('info', `makePortal: ${printPos(pos)}, ${printPos(destPos)}, opts: ${JSON.stringify(opts)}`);
+        if (!isRoomPosition(pos) || !isRoomPosition(destPos)) {
+            throw new Error('Invalid portal positions!');
+        }
+        let unstableDate = undefined;
+        let decayTime = undefined;
+        if ((opts === null || opts === void 0 ? void 0 : opts.decayTime) && (opts === null || opts === void 0 ? void 0 : opts.unstableDate)) {
+            throw new Error("can't specify both decayTime and unstableDate");
+        }
+        else if (opts === null || opts === void 0 ? void 0 : opts.unstableDate) {
+            if (!___default["default"].isFinite(opts.unstableDate) || opts.unstableDate <= 0) {
+                throw new Error(`unstableDate must be a positive integer`);
+            }
+            else if (opts.unstableDate < Date.now()) {
+                throw new Error(`unstableDate is in the past?`);
+            }
+            unstableDate = Math.round(opts.unstableDate);
+        }
+        else if (opts === null || opts === void 0 ? void 0 : opts.decayTime) {
+            let decay;
+            if (___default["default"].isBoolean(opts.decayTime)) {
+                decay = C.PORTAL_DECAY;
+            }
+            else if (___default["default"].isFinite(opts.decayTime) && opts.decayTime > 0) {
+                decay = opts.decayTime;
+            }
             else {
-                this.makePortal(srcPos, dstPos, portalOpts);
-                if (!opts.oneWay) {
-                    this.makePortal(dstPos, srcPos, portalOpts);
-                }
+                throw new Error(`decayTime must be a positive integer or a boolean`);
             }
-        },
-        makePortal: async function (pos, destPos, opts) {
-            log('info', `makePortal: ${printPos(pos)}, ${printPos(destPos)}, opts: ${JSON.stringify(opts)}`);
-            if (!isRoomPosition(pos) || !isRoomPosition(destPos)) {
-                throw new Error('Invalid portal positions!');
-            }
-            let unstableDate = undefined;
-            let decayTime = undefined;
-            if ((opts === null || opts === void 0 ? void 0 : opts.decayTime) && (opts === null || opts === void 0 ? void 0 : opts.unstableDate)) {
-                throw new Error("can't specify both decayTime and unstableDate");
-            }
-            else if (opts === null || opts === void 0 ? void 0 : opts.unstableDate) {
-                if (!___default["default"].isFinite(opts.unstableDate) || opts.unstableDate <= 0) {
-                    throw new Error(`unstableDate must be a positive integer`);
-                }
-                else if (opts.unstableDate < Date.now()) {
-                    throw new Error(`unstableDate is in the past?`);
-                }
-                unstableDate = Math.round(opts.unstableDate);
-            }
-            else if (opts === null || opts === void 0 ? void 0 : opts.decayTime) {
-                let decay;
-                if (___default["default"].isBoolean(opts.decayTime)) {
-                    decay = C.PORTAL_DECAY;
-                }
-                else if (___default["default"].isFinite(opts.decayTime) && opts.decayTime > 0) {
-                    decay = opts.decayTime;
-                }
-                else {
-                    throw new Error(`decayTime must be a positive integer or a boolean`);
-                }
-                const tick = await common.getGametime();
-                decayTime = tick + decay;
-            }
-            const portal = {
-                room: pos.room,
-                x: pos.x,
-                y: pos.y,
-                type: 'portal',
-                destination: destPos,
-            };
-            if (unstableDate)
-                portal.unstableDate = Math.round(unstableDate);
-            else if (decayTime)
-                portal.decayTime = Math.round(decayTime);
-            log('debug', `portal: ${JSON.stringify(portal)}`);
-            db['rooms.objects'].insert(portal);
-        },
+            const tick = await common.getGametime();
+            decayTime = tick + decay;
+        }
+        const portal = {
+            room: pos.room,
+            x: pos.x,
+            y: pos.y,
+            type: 'portal',
+            destination: destPos,
+        };
+        if (unstableDate)
+            portal.unstableDate = Math.round(unstableDate);
+        else if (decayTime)
+            portal.decayTime = Math.round(decayTime);
+        log('debug', `portal: ${JSON.stringify(portal)}`);
+        db['rooms.objects'].insert(portal);
+    }
+    config.portal = {
+        settings: Object.assign({}, DEFAULTS),
+        loadSettings,
+        createPortalPair,
+        makePortal,
     };
 }
 
