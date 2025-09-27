@@ -1,13 +1,44 @@
 export type Range = [min: number, max: number];
 
+/**
+ * Options for creating a portal pair
+ */
 export type CreatePortalOpts = {
+	/** create only one portal from source to dest */
 	oneWay?: boolean;
+	/** create an 3x3 rings of portals around a constructed wall (the position is in the center) */
 	core?: boolean;
-} & ({ unstableDate?: number; decayTime?: undefined } | { unstableDate?: undefined; decayTime?: number | boolean });
+} & (
+	| {
+			/** a timestamp of when the portal should start decaying */
+			unstableDate?: number;
+			/** number of ticks before the portal decays and disappears, or true if you want the default decaying duration */
+			decayTime?: undefined;
+	  }
+	| {
+			/** a timestamp of when the portal should start decaying */
+			unstableDate?: undefined;
+			/** number of ticks before the portal decays and disappears, or true if you want the default decaying duration */
+			decayTime?: number | boolean;
+	  }
+);
 
+/**
+ * Options for creating a single portal
+ */
 export type PortalOpts =
-	| { unstableDate?: number; decayTime?: undefined }
-	| { unstableDate?: undefined; decayTime?: boolean | number };
+	| {
+			/** a timestamp of when the portal should start decaying */
+			unstableDate?: number;
+			/** number of ticks before the portal decays and disappears, or true if you want the default decaying duration */
+			decayTime?: undefined;
+	  }
+	| {
+			/** a timestamp of when the portal should start decaying */
+			unstableDate?: undefined;
+			/** number of ticks before the portal decays and disappears, or true if you want the default decaying duration */
+			decayTime?: boolean | number;
+	  };
 
 export interface PortalModSettings {
 	/**
@@ -82,7 +113,7 @@ declare global {
 			createPortalPair(
 				src: string | RoomPosition,
 				dst: string | RoomPosition,
-				_opts?: Partial<CreatePortalOpts>
+				opts?: Partial<CreatePortalOpts>
 			): void;
 			makePortal(pos: RoomPosition, destPos: RoomPosition, opts?: PortalOpts): void;
 		};
@@ -90,9 +121,9 @@ declare global {
 
 	interface MapCli {
 		createPortal(
-			_srcRoom: string | RoomPosition,
-			_dstRoom: string | RoomPosition,
-			_opts: Partial<CreatePortalOpts>
+			srcRoom: string | RoomPosition,
+			dstRoom: string | RoomPosition,
+			opts?: Partial<CreatePortalOpts>
 		): Promise<void>;
 		removePortal(src: string, dst?: string): Promise<string>;
 	}

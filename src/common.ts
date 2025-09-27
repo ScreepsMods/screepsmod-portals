@@ -39,12 +39,14 @@ export default function (config: ServerConfig) {
 	const C = config.common.constants;
 	const { env, db } = config.common.storage;
 
+	/** Ensure the given room position can have a portal dropped on it without overlapping anything */
 	async function isValidPortalLocation(roomName: RoomName, x: number, y: number, core: boolean) {
 		const objects = (await db['rooms.objects'].find({ room: roomName })) as RoomObject[];
 		const terrain = (await db['rooms.terrain'].findOne({
 			room: roomName,
 		})) as RoomTerrain;
 
+		/** Helper to quickly check for blockers at a position */
 		const checkCoord = (x: number, y: number) => {
 			if (!common.checkTerrain(terrain.terrain, x, y, C.TERRAIN_MASK_WALL)) {
 				return false;
@@ -122,17 +124,25 @@ export default function (config: ServerConfig) {
 		log('debug', `settings: ${JSON.stringify(config.portal.settings, undefined, ' ')}`);
 	}
 
+	/**
+	 * Create a portal pair.
+	 *
+	 * This is the higher-level function. It'll automatically select proper source & destination positions
+	 * within their respective rooms if the arguments are room names. It's also handling the nuance of core
+	 * vs. non-core portals; placing the center wall and the circle of cross-linked portals for the former.
+	 */
 	async function createPortalPair(
 		src: string | RoomPosition,
 		dst: string | RoomPosition,
 		_opts: Partial<CreatePortalOpts> = {}
 	) {
-		const opts = _.defaults<CreatePortalOpts>({}, _opts, {
+		const defaults: CreatePortalOpts = {
 			decayTime: undefined,
 			unstableDate: undefined,
 			oneWay: false,
 			core: false,
-		});
+		};
+		const opts = _.defaults<CreatePortalOpts>({}, _opts, defaults);
 
 		let portalOpts: PortalOpts = {};
 		if (opts.decayTime && opts.unstableDate) {
@@ -206,6 +216,9 @@ export default function (config: ServerConfig) {
 		}
 	}
 
+	/**
+	 * Creates an uni-directional portal between two positions
+	 */
 	async function makePortal(pos: RoomPosition, destPos: RoomPosition, opts?: PortalOpts) {
 		log('info', `makePortal: ${printPos(pos)}, ${printPos(destPos)}, opts: ${JSON.stringify(opts)}`);
 

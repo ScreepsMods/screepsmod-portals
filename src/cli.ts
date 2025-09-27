@@ -15,7 +15,7 @@ export default function (config: ServerConfig, sandbox: CliSandbox) {
 			'    * unstableDate - a timestamp of when the portal should start decaying\n' +
 			'    * oneWay - create only one portal from source to dest\n' +
 			'    * core - create an 3x3 rings of portals around a constructed wall (the position is in the center)',
-		async function (src: string | RoomPosition, dst: string | RoomPosition, opts: Partial<CreatePortalOpts>) {
+		async function (src: string | RoomPosition, dst: string | RoomPosition, opts?: Partial<CreatePortalOpts>) {
 			config.portal.createPortalPair(src, dst, opts);
 		},
 	]);

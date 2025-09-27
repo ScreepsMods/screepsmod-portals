@@ -274,11 +274,13 @@ function checkPosition(pos) {
 function common$1 (config) {
     const C = config.common.constants;
     const { env, db } = config.common.storage;
+    /** Ensure the given room position can have a portal dropped on it without overlapping anything */
     async function isValidPortalLocation(roomName, x, y, core) {
         const objects = (await db['rooms.objects'].find({ room: roomName }));
         const terrain = (await db['rooms.terrain'].findOne({
             room: roomName,
         }));
+        /** Helper to quickly check for blockers at a position */
         const checkCoord = (x, y) => {
             if (!common.checkTerrain(terrain.terrain, x, y, C.TERRAIN_MASK_WALL)) {
                 return false;
@@ -363,13 +365,21 @@ function common$1 (config) {
         config.portal.settings = ___default["default"].defaultsDeep({}, settings, DEFAULTS);
         log('debug', `settings: ${JSON.stringify(config.portal.settings, undefined, ' ')}`);
     }
+    /**
+     * Create a portal pair.
+     *
+     * This is the higher-level function. It'll automatically select proper source & destination positions
+     * within their respective rooms if the arguments are room names. It's also handling the nuance of core
+     * vs. non-core portals; placing the center wall and the circle of cross-linked portals for the former.
+     */
     async function createPortalPair(src, dst, _opts = {}) {
-        const opts = ___default["default"].defaults({}, _opts, {
+        const defaults = {
             decayTime: undefined,
             unstableDate: undefined,
             oneWay: false,
             core: false,
-        });
+        };
+        const opts = ___default["default"].defaults({}, _opts, defaults);
         let portalOpts = {};
         if (opts.decayTime && opts.unstableDate) {
             throw new Error("can't specify both decayTime and unstableDate");
@@ -439,6 +449,9 @@ function common$1 (config) {
             }
         }
     }
+    /**
+     * Creates an uni-directional portal between two positions
+     */
     async function makePortal(pos, destPos, opts) {
         log('info', `makePortal: ${printPos(pos)}, ${printPos(destPos)}, opts: ${JSON.stringify(opts)}`);
         if (!isRoomPosition(pos) || !isRoomPosition(destPos)) {
