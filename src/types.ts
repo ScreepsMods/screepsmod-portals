@@ -104,27 +104,3 @@ export interface PortalModSettings {
 	 */
 	unstableDateRange: number | Range;
 }
-
-declare global {
-	interface ServerConfig {
-		portal: {
-			settings: PortalModSettings;
-			loadSettings(data: any): void;
-			createPortalPair(
-				src: string | RoomPosition,
-				dst: string | RoomPosition,
-				opts?: Partial<CreatePortalOpts>
-			): void;
-			makePortal(pos: RoomPosition, destPos: RoomPosition, opts?: PortalOpts): void;
-		};
-	}
-
-	interface MapCli {
-		createPortal(
-			srcRoom: string | RoomPosition,
-			dstRoom: string | RoomPosition,
-			opts?: Partial<CreatePortalOpts>
-		): Promise<void>;
-		removePortal(src: string, dst?: string): Promise<string>;
-	}
-}

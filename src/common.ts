@@ -271,3 +271,18 @@ export default function (config: ServerConfig) {
 		makePortal,
 	};
 }
+
+declare global {
+	interface ServerConfig {
+		portal: {
+			settings: PortalModSettings;
+			loadSettings(data: any): void;
+			createPortalPair(
+				src: string | RoomPosition,
+				dst: string | RoomPosition,
+				opts?: Partial<CreatePortalOpts>
+			): void;
+			makePortal(pos: RoomPosition, destPos: RoomPosition, opts?: PortalOpts): void;
+		};
+	}
+}

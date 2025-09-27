@@ -23,3 +23,13 @@ export default function (config: ServerConfig, sandbox: CliSandbox) {
 	// Regenerate the help message to show our new commands
 	sandbox.map._help = utils.generateCliHelp('map.', sandbox.map);
 }
+
+declare global {
+	interface MapCli {
+		createPortal(
+			srcRoom: string | RoomPosition,
+			dstRoom: string | RoomPosition,
+			opts?: Partial<CreatePortalOpts>
+		): Promise<void>;
+	}
+}
