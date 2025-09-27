@@ -1,5 +1,4 @@
 import _ from 'lodash';
-import path from 'path';
 import { isRoomName, isRoomPosition, printPos, serverRequire, log, isRange, isNumberBetween } from './utils';
 import type commonMod from '@screeps/common';
 import type utilsMod from '@screeps/backend/lib/utils.js';

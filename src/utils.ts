@@ -78,22 +78,6 @@ export function isCore(room: Room | RoomName) {
 }
 
 /**
- *
- * @param {string} terrain
- * @returns
- */
-export function decodeTerrain(terrain: string) {
-	return terrain.split('').map((char) => Number(char));
-}
-
-export function checkTerrain(terrain: number[], x: number, y: number, mask: number) {
-	if (x < 0 || x > 49) throw new Error(`x coordinate out of terrain bounds: ${x}`);
-	if (y < 0 || y > 49) throw new Error(`y coordinate out of terrain bounds: ${y}`);
-	const code = terrain[y * 50 + x];
-	return (code & mask) > 0;
-}
-
-/**
  * Check whether {@link r} represents a range.
  *
  * @param r The range to check
