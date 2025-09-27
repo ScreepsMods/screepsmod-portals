@@ -2,7 +2,6 @@
 
 var _ = require('lodash');
 var path = require('path');
-var console$1 = require('console');
 
 function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
 
@@ -13,8 +12,8 @@ const serverModulesDir = path__default["default"].resolve(process.cwd(), 'node_m
 function serverRequire(id) {
     return require(require.resolve(id, { paths: [serverModulesDir] }));
 }
-function log(...msg) {
-    console.log(`[portals]`, ...msg);
+function log(level, ...args) {
+    console[level]('[portals]', ...args);
 }
 function isRoomName(roomName) {
     return typeof roomName === 'string' && /^[WE]\d+[NS]\d+$/.test(roomName);
@@ -98,7 +97,7 @@ function cronjobs (config) {
 async function refreshPortals(config) {
     const { db } = config.common.storage;
     const { maxPairs, distance: [minDistance, maxDistance], chance, unstableDateRange, decayTimeRange, } = config.portal.settings;
-    log(`Refreshing portals`);
+    log('info', `Refreshing portals`);
     // We make a list of all the portals we know about
     const oneWay = new Set();
     const pairs = new Map();
@@ -127,14 +126,14 @@ async function refreshPortals(config) {
         }
     }
     let numPairs = pairs.size / 2 + oneWay.size;
-    log(`${pairs.size / 2} portal pairs: ${[...pairs.entries()].map(([p1, p2]) => `${p1.room} => ${p2.room}`)}`);
-    log(`${oneWay.size} one-way portals: ${[...oneWay.values()].map((p) => `${p.room} => ${p.destination.room}`)}`);
+    log('debug', `${pairs.size / 2} portal pairs: ${[...pairs.entries()].map(([p1, p2]) => `${p1.room} => ${p2.room}`)}`);
+    log('debug', `${oneWay.size} one-way portals: ${[...oneWay.values()].map((p) => `${p.room} => ${p.destination.room}`)}`);
     const allRooms = (await db['rooms'].find({ status: 'normal' }));
     const possibleRooms = new Set(allRooms.filter((r) => isCore(r) || isCrossroads(r)));
-    log(`portalRooms: ${[...possibleRooms.values()].map((r) => r.name)}`);
+    log('debug', `portalRooms: ${[...possibleRooms.values()].map((r) => r.name)}`);
     let limit = 10;
     while (numPairs < maxPairs && limit > 0) {
-        log(`missing ${maxPairs - numPairs}`);
+        log('debug', `missing ${maxPairs - numPairs}`);
         const isStray = chance.stray !== 0 && Math.random() <= chance.stray;
         let portalRooms = isStray ? allRooms : [...possibleRooms];
         const srcRoom = ___default["default"].sample(portalRooms);
@@ -156,32 +155,32 @@ async function refreshPortals(config) {
         // Helper function to select a proper destination
         const pickRandomDestination = (room) => {
             const [roomX, roomY] = utils$1.roomNameToXY(room.name);
-            log(`picked ${isStray ? 'stray ' : ''}room ${room.name} (${roomX}, ${roomY}), checking rooms in range ${minDistance}-${maxDistance}`);
+            log('debug', `picked ${isStray ? 'stray ' : ''}room ${room.name} (${roomX}, ${roomY}), checking rooms in range ${minDistance}-${maxDistance}`);
             const candidates = portalRooms.filter((r) => {
                 if (r.status !== room.status)
                     return false;
                 if (!isStray && roomType(r) !== roomType(room))
                     return false;
                 if (portalsInRoom.find((p) => p.destination.room === r.name)) {
-                    log(`portal between ${srcRoom.name} and ${r.name} already exist, ignoring`);
+                    log('debug', `portal between ${srcRoom.name} and ${r.name} already exist, ignoring`);
                     // There's already a portal linking back to this room, skip!
                     return false;
                 }
                 const [rX, rY] = utils$1.roomNameToXY(r.name);
                 const [xDist, yDist] = [Math.abs(roomX - rX), Math.abs(roomY - rY)];
                 const valid = xDist >= minDistance && yDist >= minDistance && xDist < maxDistance && yDist < maxDistance;
-                log(`checking ${r.name} (${rX}, ${rY}): ${xDist}, ${yDist} => ${valid}`);
+                log('debug', `checking ${r.name} (${rX}, ${rY}): ${xDist}, ${yDist} => ${valid}`);
                 return valid;
             });
             return ___default["default"].sample(candidates);
         };
         const dstRoom = pickRandomDestination(srcRoom);
         if (!dstRoom) {
-            log(`no good destination room for ${srcRoom.name}`);
+            log('debug', `no good destination room for ${srcRoom.name}`);
             limit--;
             continue;
         }
-        log(`selected destination rooms for ${srcRoom.name}: ${dstRoom.name}`);
+        log('debug', `selected destination rooms for ${srcRoom.name}: ${dstRoom.name}`);
         possibleRooms.delete(dstRoom);
         const opts = { core: isCore(srcRoom) };
         if (chance.oneWay !== 0 && Math.random() <= chance.oneWay) {
@@ -216,7 +215,7 @@ function backend (config) {
     var _a;
     cronjobs(config);
     (_a = config.utils) === null || _a === void 0 ? void 0 : _a.on('config:update:portals', (data) => {
-        log('portals config reload!', data);
+        log('info', 'portals config reload!', data);
         config.portal.loadSettings(data);
     });
     config.cli.on('cliSandbox', function (sandbox) {
@@ -303,60 +302,60 @@ function common$1 (config) {
             var _a, _b, _c, _d;
             const settings = {};
             if ('maxPairs' in data && (typeof data.maxPairs !== 'number' || data.maxPairs < 0)) {
-                console$1.log(`invalid value for 'maxPairs', using default`);
+                log('error', `invalid value for 'maxPairs', using default`);
             }
             else {
                 settings.maxPairs = data.maxPairs;
             }
             if (data.distance && !isRange(data.distance, 0)) {
-                console$1.log(`invalid value for 'distance', using default`);
+                log('error', `invalid value for 'distance', using default`);
             }
             else {
                 settings.distance = data.distance;
             }
             if (data.decayTimeRange && !___default["default"].isFinite(data.decayTimeRange) && !isRange(data.decayTimeRange, 0)) {
-                console$1.log(`invalid value for 'decayTimeRange', using default`);
+                log('error', `invalid value for 'decayTimeRange', using default`);
             }
             else {
                 settings.decayTimeRange = data.decayTimeRange;
             }
             if (data.unstableDateRange && !___default["default"].isFinite(data.unstableDateRange) && !isRange(data.unstableDateRange, 0)) {
-                console$1.log(`invalid value for 'unstableDateRange', using default`);
+                log('error', `invalid value for 'unstableDateRange', using default`);
             }
             else {
                 settings.unstableDateRange = data.unstableDateRange;
             }
             if (data.chance && !___default["default"].isPlainObject(data.chance)) {
-                console$1.log(`invalid value for 'chance', using default`);
+                log('error', `invalid value for 'chance', using default`);
             }
             else if (data.chance) {
                 if (!inRange(data.chance.decay, 0, 1)) {
-                    console$1.log(`invalid value for 'chance.decay', using default`);
+                    log('error', `invalid value for 'chance.decay', using default`);
                 }
                 else {
                     ((_a = settings.chance) !== null && _a !== void 0 ? _a : (settings.chance = {})).decay = data.chance.decay;
                 }
                 if (!inRange(data.chance.unstable, 0, 1)) {
-                    console$1.log(`invalid value for 'chance.stray', using default`);
+                    log('error', `invalid value for 'chance.stray', using default`);
                 }
                 else {
                     ((_b = settings.chance) !== null && _b !== void 0 ? _b : (settings.chance = {})).unstable = data.chance.unstable;
                 }
                 if (!inRange(data.chance.oneWay, 0, 1)) {
-                    console$1.log(`invalid value for 'chance.oneWay', using default`);
+                    log('error', `invalid value for 'chance.oneWay', using default`);
                 }
                 else {
                     ((_c = settings.chance) !== null && _c !== void 0 ? _c : (settings.chance = {})).oneWay = data.chance.oneWay;
                 }
                 if (!inRange(data.chance.stray, 0, 1)) {
-                    console$1.log(`invalid value for 'chance.stray', using default`);
+                    log('error', `invalid value for 'chance.stray', using default`);
                 }
                 else {
                     ((_d = settings.chance) !== null && _d !== void 0 ? _d : (settings.chance = {})).stray = data.chance.stray;
                 }
             }
             this.settings = ___default["default"].defaultsDeep({}, settings, DEFAULTS);
-            console$1.log(`settings: ${JSON.stringify(this.settings, undefined, ' ')}`);
+            log('debug', `settings: ${JSON.stringify(this.settings, undefined, ' ')}`);
         },
         createPortalPair: async function (src, dst, _opts = {}) {
             const opts = ___default["default"].defaults({}, _opts, {
@@ -377,7 +376,7 @@ function common$1 (config) {
             }
             let [srcRoom, srcPos] = checkPosition(src);
             let [dstRoom, dstPos] = checkPosition(dst);
-            console$1.log(`creating portal from ${srcPos ? printPos(srcPos) : srcRoom} to ${dstPos ? printPos(dstPos) : dstRoom}: opts: ${JSON.stringify(portalOpts)}`);
+            log('info', `creating portal from ${srcPos ? printPos(srcPos) : srcRoom} to ${dstPos ? printPos(dstPos) : dstRoom}: opts: ${JSON.stringify(portalOpts)}`);
             const srcTerrain = (await db['rooms.terrain'].findOne({
                 room: src,
             }));
@@ -435,7 +434,7 @@ function common$1 (config) {
             }
         },
         makePortal: async function (pos, destPos, opts) {
-            console$1.log(`makePortal: ${printPos(pos)}, ${printPos(destPos)}, opts: ${JSON.stringify(opts)}`);
+            log('info', `makePortal: ${printPos(pos)}, ${printPos(destPos)}, opts: ${JSON.stringify(opts)}`);
             if (!isRoomPosition(pos) || !isRoomPosition(destPos)) {
                 throw new Error('Invalid portal positions!');
             }
@@ -478,7 +477,7 @@ function common$1 (config) {
                 portal.unstableDate = Math.round(unstableDate);
             else if (decayTime)
                 portal.decayTime = Math.round(decayTime);
-            console$1.log(`portal: ${JSON.stringify(portal)}`);
+            log('debug', `portal: ${JSON.stringify(portal)}`);
             db['rooms.objects'].insert(portal);
         },
     };

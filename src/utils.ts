@@ -7,8 +7,8 @@ export function serverRequire(id: string) {
 	return require(require.resolve(id, { paths: [serverModulesDir] }));
 }
 
-export function log(...msg: any[]) {
-	console.log(`[portals]`, ...msg);
+export function log(level: 'info' | 'debug' | 'error', ...args: any[]) {
+	console[level]('[portals]', ...args);
 }
 
 export function isRoomName(roomName: unknown): roomName is RoomName {

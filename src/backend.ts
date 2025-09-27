@@ -6,7 +6,7 @@ export default function (config: ServerConfig) {
 	cronjobs(config);
 
 	config.utils?.on('config:update:portals', (data) => {
-		log('portals config reload!', data);
+		log('info', 'portals config reload!', data);
 		config.portal.loadSettings(data);
 	});
 	config.cli.on('cliSandbox', function (sandbox: CliSandbox) {

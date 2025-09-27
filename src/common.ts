@@ -1,7 +1,6 @@
 import _ from 'lodash';
 import path from 'path';
-import { isRoomName, isRoomPosition, printPos, serverRequire } from './utils';
-import { log } from 'console';
+import { isRoomName, isRoomPosition, printPos, serverRequire, log } from './utils';
 import type commonMod from '@screeps/common';
 import type utilsMod from '@screeps/backend/lib/utils.js';
 import { CreatePortalOpts, PortalOpts, PortalModSettings } from './types';
@@ -97,51 +96,51 @@ export default function (config: ServerConfig) {
 		loadSettings: function (data: Partial<PortalModSettings>) {
 			const settings: Partial<PortalModSettings> = {};
 			if ('maxPairs' in data && (typeof data.maxPairs !== 'number' || data.maxPairs < 0)) {
-				log(`invalid value for 'maxPairs', using default`);
+				log('error', `invalid value for 'maxPairs', using default`);
 			} else {
 				settings.maxPairs = data.maxPairs;
 			}
 			if (data.distance && !isRange(data.distance, 0)) {
-				log(`invalid value for 'distance', using default`);
+				log('error', `invalid value for 'distance', using default`);
 			} else {
 				settings.distance = data.distance;
 			}
 			if (data.decayTimeRange && !_.isFinite(data.decayTimeRange) && !isRange(data.decayTimeRange, 0)) {
-				log(`invalid value for 'decayTimeRange', using default`);
+				log('error', `invalid value for 'decayTimeRange', using default`);
 			} else {
 				settings.decayTimeRange = data.decayTimeRange;
 			}
 			if (data.unstableDateRange && !_.isFinite(data.unstableDateRange) && !isRange(data.unstableDateRange, 0)) {
-				log(`invalid value for 'unstableDateRange', using default`);
+				log('error', `invalid value for 'unstableDateRange', using default`);
 			} else {
 				settings.unstableDateRange = data.unstableDateRange;
 			}
 			if (data.chance && !_.isPlainObject(data.chance)) {
-				log(`invalid value for 'chance', using default`);
+				log('error', `invalid value for 'chance', using default`);
 			} else if (data.chance) {
 				if (!inRange(data.chance.decay, 0, 1)) {
-					log(`invalid value for 'chance.decay', using default`);
+					log('error', `invalid value for 'chance.decay', using default`);
 				} else {
 					(settings.chance ??= {} as PortalModSettings['chance']).decay = data.chance.decay;
 				}
 				if (!inRange(data.chance.unstable, 0, 1)) {
-					log(`invalid value for 'chance.stray', using default`);
+					log('error', `invalid value for 'chance.stray', using default`);
 				} else {
 					(settings.chance ??= {} as PortalModSettings['chance']).unstable = data.chance.unstable;
 				}
 				if (!inRange(data.chance.oneWay, 0, 1)) {
-					log(`invalid value for 'chance.oneWay', using default`);
+					log('error', `invalid value for 'chance.oneWay', using default`);
 				} else {
 					(settings.chance ??= {} as PortalModSettings['chance']).oneWay = data.chance.oneWay;
 				}
 				if (!inRange(data.chance.stray, 0, 1)) {
-					log(`invalid value for 'chance.stray', using default`);
+					log('error', `invalid value for 'chance.stray', using default`);
 				} else {
 					(settings.chance ??= {} as PortalModSettings['chance']).stray = data.chance.stray;
 				}
 			}
 			this.settings = _.defaultsDeep({}, settings, DEFAULTS);
-			log(`settings: ${JSON.stringify(this.settings, undefined, ' ')}`);
+			log('debug', `settings: ${JSON.stringify(this.settings, undefined, ' ')}`);
 		},
 		createPortalPair: async function (
 			src: string | RoomPosition,
@@ -168,6 +167,7 @@ export default function (config: ServerConfig) {
 			let [dstRoom, dstPos] = checkPosition(dst);
 
 			log(
+				'info',
 				`creating portal from ${srcPos ? printPos(srcPos) : srcRoom} to ${dstPos ? printPos(dstPos) : dstRoom}: opts: ${JSON.stringify(portalOpts)}`
 			);
 
@@ -227,7 +227,7 @@ export default function (config: ServerConfig) {
 		},
 
 		makePortal: async function (pos: RoomPosition, destPos: RoomPosition, opts?: PortalOpts) {
-			log(`makePortal: ${printPos(pos)}, ${printPos(destPos)}, opts: ${JSON.stringify(opts)}`);
+			log('info', `makePortal: ${printPos(pos)}, ${printPos(destPos)}, opts: ${JSON.stringify(opts)}`);
 
 			if (!isRoomPosition(pos) || !isRoomPosition(destPos)) {
 				throw new Error('Invalid portal positions!');
@@ -267,7 +267,7 @@ export default function (config: ServerConfig) {
 			if (unstableDate) portal.unstableDate = Math.round(unstableDate);
 			else if (decayTime) portal.decayTime = Math.round(decayTime);
 
-			log(`portal: ${JSON.stringify(portal)}`);
+			log('debug', `portal: ${JSON.stringify(portal)}`);
 			db['rooms.objects'].insert(portal);
 		},
 	};

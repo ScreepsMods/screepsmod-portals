@@ -21,7 +21,7 @@ async function refreshPortals(config: ServerConfig) {
 		decayTimeRange,
 	} = config.portal.settings;
 
-	log(`Refreshing portals`);
+	log('info', `Refreshing portals`);
 
 	// We make a list of all the portals we know about
 	const oneWay = new Set<PortalObject>();
@@ -55,17 +55,23 @@ async function refreshPortals(config: ServerConfig) {
 
 	let numPairs = pairs.size / 2 + oneWay.size;
 
-	log(`${pairs.size / 2} portal pairs: ${[...pairs.entries()].map(([p1, p2]) => `${p1.room} => ${p2.room}`)}`);
-	log(`${oneWay.size} one-way portals: ${[...oneWay.values()].map((p) => `${p.room} => ${p.destination.room}`)}`);
+	log(
+		'debug',
+		`${pairs.size / 2} portal pairs: ${[...pairs.entries()].map(([p1, p2]) => `${p1.room} => ${p2.room}`)}`
+	);
+	log(
+		'debug',
+		`${oneWay.size} one-way portals: ${[...oneWay.values()].map((p) => `${p.room} => ${p.destination.room}`)}`
+	);
 
 	const allRooms = (await db['rooms'].find({ status: 'normal' })) as Room[];
 
 	const possibleRooms = new Set(allRooms.filter((r) => isCore(r) || isCrossroads(r)));
-	log(`portalRooms: ${[...possibleRooms.values()].map((r) => r.name)}`);
+	log('debug', `portalRooms: ${[...possibleRooms.values()].map((r) => r.name)}`);
 
 	let limit = 10;
 	while (numPairs < maxPairs && limit > 0) {
-		log(`missing ${maxPairs - numPairs}`);
+		log('debug', `missing ${maxPairs - numPairs}`);
 		const isStray = chance.stray !== 0 && Math.random() <= chance.stray;
 		let portalRooms = isStray ? allRooms : [...possibleRooms];
 		const srcRoom = _.sample(portalRooms);
@@ -88,13 +94,14 @@ async function refreshPortals(config: ServerConfig) {
 		const pickRandomDestination = (room: Room) => {
 			const [roomX, roomY] = utils.roomNameToXY(room.name);
 			log(
+				'debug',
 				`picked ${isStray ? 'stray ' : ''}room ${room.name} (${roomX}, ${roomY}), checking rooms in range ${minDistance}-${maxDistance}`
 			);
 			const candidates = portalRooms.filter((r) => {
 				if (r.status !== room.status) return false;
 				if (!isStray && roomType(r) !== roomType(room)) return false;
 				if (portalsInRoom.find((p) => p.destination.room === r.name)) {
-					log(`portal between ${srcRoom.name} and ${r.name} already exist, ignoring`);
+					log('debug', `portal between ${srcRoom.name} and ${r.name} already exist, ignoring`);
 					// There's already a portal linking back to this room, skip!
 					return false;
 				}
@@ -102,7 +109,7 @@ async function refreshPortals(config: ServerConfig) {
 				const [xDist, yDist] = [Math.abs(roomX - rX), Math.abs(roomY - rY)];
 				const valid =
 					xDist >= minDistance && yDist >= minDistance && xDist < maxDistance && yDist < maxDistance;
-				log(`checking ${r.name} (${rX}, ${rY}): ${xDist}, ${yDist} => ${valid}`);
+				log('debug', `checking ${r.name} (${rX}, ${rY}): ${xDist}, ${yDist} => ${valid}`);
 				return valid;
 			});
 			return _.sample(candidates);
@@ -110,11 +117,11 @@ async function refreshPortals(config: ServerConfig) {
 
 		const dstRoom = pickRandomDestination(srcRoom);
 		if (!dstRoom) {
-			log(`no good destination room for ${srcRoom.name}`);
+			log('debug', `no good destination room for ${srcRoom.name}`);
 			limit--;
 			continue;
 		}
-		log(`selected destination rooms for ${srcRoom.name}: ${dstRoom.name}`);
+		log('debug', `selected destination rooms for ${srcRoom.name}: ${dstRoom.name}`);
 		possibleRooms.delete(dstRoom);
 
 		const opts: CreatePortalOpts = { core: isCore(srcRoom) };
