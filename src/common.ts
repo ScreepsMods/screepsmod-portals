@@ -13,6 +13,15 @@ import {
 import type commonMod from '@screeps/common';
 import type utilsMod from '@screeps/backend/lib/utils.js';
 import { CreatePortalOpts, PortalOpts, PortalModSettings, RemovePortalOpts } from './types';
+import {
+	RoomName,
+	RoomPosition,
+	RoomTerrain,
+	PortalObject,
+	BaseObject,
+	StructureWallObject,
+	ServerConfig,
+} from 'typed-screeps-server';
 
 const common = serverRequire('@screeps/common') as typeof commonMod;
 const utils = serverRequire('@screeps/backend/lib/utils.js') as typeof utilsMod;
@@ -40,7 +49,7 @@ function checkPosition(pos: unknown): [roomName: RoomName, pos: RoomPosition | u
 		roomName = pos;
 	} else {
 		roomPos = pos;
-		roomName = roomPos.room;
+		roomName = roomPos!.room;
 	}
 	return [roomName, roomPos];
 }
@@ -51,7 +60,7 @@ export default function (config: ServerConfig) {
 
 	/** Ensure the given room position can have a portal dropped on it without overlapping anything */
 	async function isValidPortalLocation(roomName: RoomName, x: number, y: number, core: boolean) {
-		const objects = (await db['rooms.objects'].find({ room: roomName })) as RoomObject[];
+		const objects = (await db['rooms.objects'].find({ room: roomName })) as BaseObject[];
 		const terrain = (await db['rooms.terrain'].findOne({
 			room: roomName,
 		})) as RoomTerrain;
@@ -204,7 +213,7 @@ export default function (config: ServerConfig) {
 					const coreDst = { x: dstPos.x + x, y: dstPos.y + y, room: dstPos.room };
 					if (x === 0 && y === 0) {
 						// Make an eternal center wall; the portal decay handles removing those
-						let wall: WallObject = { ...coreSrc, type: 'constructedWall' };
+						let wall: StructureWallObject = { ...coreSrc, type: 'constructedWall' };
 						await db['rooms.objects'].insert(wall);
 						if (!opts.oneWay) {
 							wall = { ...coreDst, type: 'constructedWall' };
@@ -280,7 +289,7 @@ export default function (config: ServerConfig) {
 	async function getPortalObjectsAtPos(pos: RoomPosition) {
 		const objects = (await db['rooms.objects'].find({
 			room: pos.room,
-		})) as RoomObject[];
+		})) as BaseObject[];
 
 		const portal = objects.find((obj) => obj.type === 'portal' && isSamePos(obj, pos)) as PortalObject;
 		if (!portal) {
@@ -290,14 +299,14 @@ export default function (config: ServerConfig) {
 		// We have a portal now *but*… it could be a core portal, so look for a neighboring wall
 		const possibleWalls = objects.filter(
 			(obj) => obj.type === 'constructedWall' && isInRangeTo(obj, pos, 1) && !('hits' in obj)
-		) as WallObject[];
+		) as StructureWallObject[];
 		// No wall -> single portal
 		if (!possibleWalls.length) {
 			return [portal];
 		}
 
 		// Otherwise, check each wall for a 8 ring of portals surrounding it
-		const portalObjects: (PortalObject | WallObject)[] = [];
+		const portalObjects: (PortalObject | StructureWallObject)[] = [];
 		for (const wall of possibleWalls) {
 			const portalRing = objects.filter(
 				(obj) => obj.type === 'portal' && isInRangeTo(obj, wall, 1)
@@ -353,7 +362,7 @@ export default function (config: ServerConfig) {
 	};
 }
 
-declare global {
+declare module 'typed-screeps-server' {
 	interface ServerConfig {
 		portal: {
 			settings: PortalModSettings;

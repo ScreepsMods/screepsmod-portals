@@ -1,13 +1,13 @@
 {
   "compilerOptions": {
-    "module": "ESNext",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
     "target": "ES2018",
     "strict": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "skipDefaultLibCheck": true,
     "outDir": "./dist",
-    "types": ["node", "typed-screeps-server", "lodash"]
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules"]

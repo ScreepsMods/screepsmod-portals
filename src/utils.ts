@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import path from 'path';
 import { Range } from './types';
+import { RoomName, RoomPosition, Room } from 'typed-screeps-server';
 
 const serverModulesDir = path.resolve(process.cwd(), 'node_modules');
 

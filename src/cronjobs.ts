@@ -5,6 +5,8 @@ import type utilsMod from '@screeps/backend/lib/utils.js';
 const utils = serverRequire('@screeps/backend/lib/utils.js') as typeof utilsMod;
 import type commonMod from '@screeps/common';
 import { CreatePortalOpts } from './types';
+import { ServerConfig, PortalObject, Room, StructureWallObject } from 'typed-screeps-server';
+
 const common = serverRequire('@screeps/common') as typeof commonMod;
 
 export default function (config: ServerConfig) {
@@ -37,7 +39,10 @@ async function refreshPortals(config: ServerConfig) {
 			continue;
 		}
 
-		const walls = (await db['rooms.objects'].find({ type: 'constructedWall', room: portal.room })) as WallObject[];
+		const walls = (await db['rooms.objects'].find({
+			type: 'constructedWall',
+			room: portal.room,
+		})) as StructureWallObject[];
 		if (walls.length && roomPortals.length) {
 			const closePortals = roomPortals.filter((p) => walls.some((w) => isInRangeTo(p, w, 1)));
 			if (closePortals.length === 8) {

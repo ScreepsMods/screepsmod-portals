@@ -3,6 +3,7 @@ import { serverRequire } from './utils';
 
 import type utilsMod from '@screeps/backend/lib/utils.js';
 import { CreatePortalOpts, RemovePortalOpts } from './types';
+import { RoomPosition, ServerConfig, CliSandbox } from 'typed-screeps-server';
 
 const utils = serverRequire('@screeps/backend/lib/utils.js') as typeof utilsMod;
 // const engineUtils = serverRequire('@screeps/engine/src/utils.js');
@@ -35,7 +36,7 @@ export default function (config: ServerConfig, sandbox: CliSandbox) {
 	sandbox.map._help = utils.generateCliHelp('map.', sandbox.map);
 }
 
-declare global {
+declare module 'typed-screeps-server' {
 	interface MapCli {
 		createPortal(
 			srcRoom: string | RoomPosition,

@@ -1,3 +1,4 @@
+import { ServerConfig } from 'typed-screeps-server';
 import backend from './backend';
 import common from './common';
 

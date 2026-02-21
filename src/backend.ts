@@ -1,6 +1,7 @@
 import cli from './cli';
 import cronjobs from './cronjobs';
 import { log } from './utils';
+import { ServerConfig, CliSandbox } from 'typed-screeps-server';
 
 export default function (config: ServerConfig) {
 	cronjobs(config);
