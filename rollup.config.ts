@@ -1,6 +1,6 @@
-import typescript from '@rollup/plugin-typescript'
-import commonjs from '@rollup/plugin-commonjs'
-import resolve from '@rollup/plugin-node-resolve'
+import esbuild from 'rollup-plugin-esbuild';
+import commonjs from '@rollup/plugin-commonjs';
+import resolve from '@rollup/plugin-node-resolve';
 
 export default {
 	input: 'src/index.ts',
@@ -13,9 +13,8 @@ export default {
 	plugins: [
 		resolve(),
 		commonjs(),
-		typescript({
-			tsconfig: './tsconfig.json',
-			target: 'es2018',
+		esbuild({
+			target: 'node10',
 		}),
 	],
 };
