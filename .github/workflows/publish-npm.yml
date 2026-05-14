@@ -1,0 +1,50 @@
+# Publishes to npm when you publish a GitHub Release (not draft).
+# Configure this package on npmjs.com as a trusted publisher for this repo
+# and workflow file: publish-npm.yml
+# https://docs.npmjs.com/trusted-publishers
+# package.json repository.url must match the GitHub repo (no git+https prefix).
+# Node: .nvmrc (>=22.14 for npm trusted publishing).
+#
+# Release flow: bump "version" in package.json on master, push, tag the commit
+# as vX.Y.Z (or X.Y.Z), push the tag, then create a Release from that tag.
+# The tag name must match package.json so the wrong version is never published.
+
+name: Publish npm
+
+on:
+    release:
+        types: [published]
+
+permissions:
+    id-token: write
+    contents: read
+
+jobs:
+    publish:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Match release tag to package.json version
+              env:
+                  TAG_NAME: ${{ github.event.release.tag_name }}
+              run: |
+                  PKG_VERSION=$(node -p "require('./package.json').version")
+                  case "$TAG_NAME" in
+                    "v${PKG_VERSION}"|"${PKG_VERSION}") ;;
+                    *)
+                      echo "::error::Release tag '$TAG_NAME' must be v${PKG_VERSION} or ${PKG_VERSION} (package.json version)."
+                      exit 1
+                      ;;
+                  esac
+
+            - uses: actions/setup-node@v4
+              with:
+                  node-version-file: ".nvmrc"
+                  registry-url: "https://registry.npmjs.org"
+                  cache: npm
+
+            - run: npm ci
+            - run: npm run lint
+            - run: npm run build
+            - run: npm publish --provenance

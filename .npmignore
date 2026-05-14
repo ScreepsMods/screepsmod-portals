@@ -1,0 +1,17 @@
+# Sources (runtime is dist/)
+src/
+
+# Build / typecheck
+rollup.config.ts
+tsconfig.json
+
+# CI & editor
+.github/
+.vscode/
+
+# Formatting / repo hygiene
+.editorconfig
+.prettierignore
+.prettierrc.yml
+.gitignore
+package-lock.json
